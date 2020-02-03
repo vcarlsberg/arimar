@@ -23,14 +23,25 @@ data_outflow_5000<-data.frame(y=c(16124,19768,19339,
                                   136470,24154,23482, 
                                   10311,38409,68227, 
                                   17580,10169,15827, 
-                                  14535,13835,16903 
+                                  14535,13835,16903,
                                   
+                                  14389,11467,11773, 
+                                  10054,7228,8408, 
+                                  9363,10491,11164, 
+                                  11855,12062,27823,
+                                  
+                                  12359,11162,13188, 
+                                  10894,14767,16711, 
+                                  15773,16950,14382, 
+                                  17494,16315,22634 
                                   ))
 
 
 
 
-myts <- ts(data_outflow_5000, start=c(1994, 1), end=c(1998, 12), frequency=12)
+
+
+myts <- ts(data_outflow_5000, start=c(1994, 1), end=c(2000, 12), frequency=12)
 
 components.ts = decompose(myts)
 plot(components.ts)
@@ -40,11 +51,17 @@ accuracy(arima1)
 forecast(arima1, 5)
 plot(forecast(arima1, 5))
 
-arima_auto <- auto.arima(myts)
+arima_auto <- auto.arima(myts,trace=TRUE,start.p=1,start.q=1)
 accuracy(arima_auto)
 forecast(arima_auto, 5)
 plot(forecast(arima_auto, 5))
 
+nnet_ar<-nnetar(myts)
+accuracy(nnet_ar)
+forecast(nnet_ar, 5)
+
 hm<-hybridModel(myts, models = "an")
-plot(forecast(hm))
+plot(forecast(hm,5))
 accuracy(hm)
+
+plot(arima1[["residuals"]])
