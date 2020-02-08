@@ -3,6 +3,8 @@ library(fable)
 library(forecastHybrid)
 library(nnet)
 library(readxl)
+library(e1071)
+library(Metrics)
 
 Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
 data_outflow_10000<-data.frame(y=Dataset_Surabaya[["K5000"]])
@@ -48,3 +50,9 @@ points(fitted.and.forecast.arima, col="blue", pch="*")
 #lines(fitted.and.forecast.arima, col="blue",lty=2)
 points(yhat, col="black", pch="*")
 #lines(yhat, col="black",lty=2)
+
+#var.omit<-data.frame(y=yhat)
+#omit<-omit["y"]
+#myts_maju<-(data.frame(y=myts[25:300]))
+rmse(myts[25:300],yhat[25:300])
+     
