@@ -38,7 +38,7 @@ plot(fitted.and.forecast.nnetar)
 
 yhat<-fitted.and.forecast.arima+fitted.and.forecast.nnetar
 yhat
-plot(yhat)
+  plot(yhat)
 
 myts <- ts(data_outflow_10000,start=c(1994, 1), end=c(2018, 12), frequency=12)
 
