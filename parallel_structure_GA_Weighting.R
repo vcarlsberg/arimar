@@ -49,10 +49,10 @@ weight_kecil<-function(w1,w2)
   rmse(myts,w1*na.omit(fitted.arima)+w2*na.omit(fitted.nnetar))
 }
 
-GA <- ga(type = "real-valued", 
+GA <- ga(type = "real-valued", nBits = 1000,
          fitness = function(w) -weight_kecil(w[1],w[2]),
          lower =c(-100,-100), upper = c(100,100),
-         maxiter=500)
+         maxiter=500,parallel=TRUE)
 summary(GA)
 rmse(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
 
@@ -60,3 +60,16 @@ yhat<-GA@solution[1]*forecast.arima[["mean"]]+
   GA@solution[2]*forecast.nnetar[["mean"]]
 yhat
 rmse(myts_2018,yhat)
+
+
+
+#pake weight 0.5 --> simple averaging (SA)
+yhat_weight05<-0.5*forecast.arima[["mean"]]+
+  0.5*forecast.nnetar[["mean"]]
+rmse(myts_2018,yhat_weight05)
+
+#pake linear regression
+lm<-lm(myts~fitted.arima+fitted.nnetar)
+summary(lm)
+rmse(myts_2018,-0.016*forecast.arima[["mean"]]+
+       1.021*forecast.nnetar[["mean"]])
