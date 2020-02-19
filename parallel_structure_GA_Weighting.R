@@ -5,6 +5,7 @@ library(nnet)
 library(readxl)
 library(GA)
 library(Metrics)
+library(tidyverse)
 
 
 Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
@@ -21,8 +22,20 @@ lambda <- BoxCox.lambda(myts,lower=0)
 
 #arima
 arima.model <- auto.arima(myts,trace=TRUE,start.p=1,start.q=1,ic="aic",lambda = lambda)
+ao<-arimaorder(arima.model)
+far2 <- function(x, h){forecast(Arima(myts, order=c(3,1,1),seasonal = c(1,0,0)), h=h)}
+e <- tsCV(myts, far2, h=12)
+cr<-checkresiduals(arima.model, lag=36)
+
+mse <- colMeans(e^2, na.rm = T)
+# Plot the MSE values against the forecast horizon
+data.frame(h = 1:12, MSE = mse) %>%
+  ggplot(aes(x = h, y = MSE)) + geom_point()
+
+#tscv<-tsCV(myts,forecastfunction=Arima(myts,order=c(3,1,1),seasonal=c(1,0,0)),drift=TRUE,h=12)
 fitted.arima<-arima.model[["fitted"]]
 forecast.arima<-forecast(arima.model,h=12)
+forecast::accuracy(arima.model)
 #fitted.and.forecast.arima<-ts(c(forecast.arima[["fitted"]],forecast.arima[["mean"]]))
 #fitted.and.forecast.arima<-ts(fitted.and.forecast.arima,start=c(1994, 1), end=c(2018, 12), frequency=12)
 #fitted.and.forecast.arima
@@ -31,6 +44,8 @@ forecast.arima<-forecast(arima.model,h=12)
 #nnetar
 #set.seed(34)
 nnetar.model<-nnetar(myts,lambda=lambda)
+#CVar(myts,k=10,h=12,nnetar(myts,lambda=lambda))
+forecast::accuracy(nnetar.model)
 fitted.nnetar<-nnetar.model[["fitted"]]
 forecast.nnetar<-forecast(nnetar.model,h=12)
 #fitted.and.forecast.nnetar<-ts(c(forecast.nnetar[["fitted"]],forecast.nnetar[["mean"]]))
@@ -46,7 +61,8 @@ rmse(myts,na.omit(fitted.arima)+na.omit(fitted.nnetar))
 weight_kecil<-function(w1,w2) 
 {
   library(Metrics)
-  rmse(myts,w1*na.omit(fitted.arima)+w2*na.omit(fitted.nnetar))
+  sse(myts,w1*na.omit(fitted.arima)+w2*na.omit(fitted.nnetar))
+  #rmse()
 }
 
 GA <- ga(type = "real-valued", nBits = 1000,
@@ -55,6 +71,9 @@ GA <- ga(type = "real-valued", nBits = 1000,
          maxiter=500,parallel=TRUE)
 summary(GA)
 rmse(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
+bias(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
+sse(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
+mae(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
 
 yhat<-GA@solution[1]*forecast.arima[["mean"]]+
   GA@solution[2]*forecast.nnetar[["mean"]]
