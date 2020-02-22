@@ -56,6 +56,10 @@ points(yhat, col="black", pch="*")
 #lines(yhat, col="black",lty=2)
 
 rmse(myts_2018,yhat[289:300])
+shapiro.test(myts_2018-yhat[289:300])
+mean(myts_2018-yhat[289:300])
+qqnorm(myts_2018-yhat[289:300])
+qqline(myts_2018-yhat[289:300])
 
 #var.omit<-data.frame(y=yhat)
 #omit<-omit["y"]

@@ -58,6 +58,9 @@ points(yhat, col="black", pch="*")
 
 rmse(myts_2018,yhat[289:300])
 
+mape(myts[25:288],yhat[25:288])
+mape(myts_2018,na.omit(yhat[289:300]))
+
 #var.omit<-data.frame(y=yhat)
 #omit<-omit["y"]
 #myts_maju<-(data.frame(y=myts[25:300]))
