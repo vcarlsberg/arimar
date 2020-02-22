@@ -55,6 +55,7 @@ forecast.nnetar<-forecast(nnetar.model,h=12)
 
 #calculating weight
 rmse(myts,na.omit(fitted.arima)+na.omit(fitted.nnetar))
+mape(myts,na.omit(fitted.arima)+na.omit(fitted.nnetar))
 
 #rmse(myts[25:288],fitted.arima[25:288]+fitted.nnetar[25:288])
 
@@ -74,12 +75,19 @@ rmse(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nne
 bias(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
 sse(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
 mae(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
+mape(myts,GA@solution[1]*na.omit(fitted.arima)+GA@solution[2]*na.omit(fitted.nnetar))
 
 yhat<-GA@solution[1]*forecast.arima[["mean"]]+
   GA@solution[2]*forecast.nnetar[["mean"]]
 yhat
 rmse(myts_2018,yhat)
 
+scatter(myts_2018-yhat[289:300])
+qqnorm(myts_2018-yhat[289:300])
+qqline(myts_2018-yhat[289:300])
+
+hist(myts_2018-yhat[289:300])
+shapiro.test(myts_2018-yhat[289:300])
 
 
 #pake weight 0.5 --> simple averaging (SA)
