@@ -22,8 +22,11 @@ myts <- ts(data_outflow,start=c(1994, 1), end=c(2017, 12), frequency=12)
 Eccm(myts,maxp=12,maxq=12)
 model_varma<-VARMA(myts, p = 6, q =0)
 
+VARselect(myts, lag.max = 48)
 model_var<-VAR(myts,p=9)
 summary(model_var)
+stabil<-stability(model_var)
+predict_var<-predict(model_var,n.ahead=12)
 
 model_var_2<-VARselect(myts,lag.max=48)
 summary(model_var_2)
