@@ -13,16 +13,20 @@ library(e1071)
 Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
                          bulan=Dataset_Surabaya[["Bulan"]],
-                         y=Dataset_Surabaya[["K10000"]])
+                         y=Dataset_Surabaya[["K50000"]])
 data_outflow$bulan<-match(data_outflow$bulan,month.abb)
 data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
 tail<-tail(data_outflow)
 
-myts <- ts(data_outflow[["y"]],start=c(2013, 1), end=c(2017, 12), frequency=12)
-index.x<-ts(c(1:60),start=c(2013, 1), end=c(2017, 12), frequency=12)
+myts <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2017, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
 myts_2018<-ts(data_outflow[["y"]],start=c(2018, 1), end=c(2018, 12), frequency=12)
+
+#myts <- ts(data_outflow[["y"]],start=c(2013, 1), end=c(2017, 12), frequency=12)
+index.x<-ts(c(1:60),start=c(2013, 1), end=c(2017, 12), frequency=12)
+#myts <- ts(data_outflow_10000, frequency=12)
+#myts_2018<-ts(data_outflow[["y"]],start=c(2018, 1), end=c(2018, 12), frequency=12)
 
 components.ts = decompose(myts)
 plot(components.ts)
@@ -30,17 +34,45 @@ plot(components.ts)
 #svrpath(x=c(1:242),y=data_outflow$y)
 index.x<-c(1:300)
 
+tuning<-function(n1,n2) 
+{
+  library(Metrics)
+  svm_model.tuning <- svm(x=c(1:288),y=data_outflow$y[1:288],
+                   kernel="radial",gamma=2^n1,cost = 2^n2)
+  
+  mape(myts,svm_model.tuning$fitted)
+  
+  #rmse()
+}
+
+GA <- ga(type = "real-valued",pmutation=0.1,
+         fitness = function(n) -tuning(n[1],n[2]),
+         lower =c(-50,-10), upper = c(50,10),
+         maxiter=50,parallel=TRUE,monitor=TRUE,seed=72)
+summary(GA)
+
+#hasil_tune_svm<-tune.svm(data_outflow$y[1:288]~c(1:288),
+#                         kernel="radial",
+#                         gamma = 2^seq(-100, 0, by = 1),
+#                         tune.control=
+#                           tune.control(error.fun=smape(myts,hasil_tune_svm$best.model$fitted))
+#                           
+#)
+#summary(hasil_tune_svm)
+#plot(hasil_tune_svm)
+#hasil_tune_svm$best.parameters[["gamma"]]
+
 svm_model <- svm(x=c(1:288),y=data_outflow$y[1:288],
-                 kernel="radial",gamma=2^12)
+                 kernel="radial",gamma=2^GA@solution[1],cost = 2^GA@solution[2])
 fitted.svm<-ts(svm_model$fitted)
-forecast(svm_model,h=12)
+#forecast(svm_model,h=12)
 nd <- 289:300
 svm_model$fitted
 forecast.svm<-predict(svm_model,newdata = data.frame(x=nd))
 myts_2018
-smape(myts_2018,hasil.prediksi.svm)
+smape(myts_2018,forecast.svm)
 
-smape(myts,)
+#smape(myts,)
 #summary(svm_model)
 
 plot(data_outflow$y[1:288], col="red", type="o")
@@ -68,10 +100,7 @@ points(yhat,col="black",pch="*")
 
 smape(na.omit(yhat),data_outflow$y[15:288])
 
-hasil_tune_svm<-tune.svm(data_outflow$y[1:288]~c(1:288),
-                         kernel="radial",
-                         gamma = 2^seq(0, 10, by = 0.5)
-)
+
 
 summary(hasil_tune_svm)
 plot(hasil_tune_svm)
@@ -110,3 +139,5 @@ tuneResult1 <- tune(svm(), x=index.x,y=myts,
                                   tunecontrol = tune.control(sampling = "fix")
                                   )
 )
+
+
