@@ -9,6 +9,7 @@ library(tidyverse)
 library(TSrepr)
 library(svrpath)
 library(e1071)
+library(NMOF)
 
 Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
@@ -61,6 +62,21 @@ summary(GA)
 #summary(hasil_tune_svm)
 #plot(hasil_tune_svm)
 #hasil_tune_svm$best.parameters[["gamma"]]
+
+testFun <- function(x)
+{
+  svm_model.tuning <- svm(x=c(1:288),y=data_outflow$y[1:288],
+                          kernel="radial",gamma=2^x[1],cost = 2^x[2])
+  
+  mape(myts,svm_model.tuning$fitted)
+}
+
+levels <- list(a = -50:50, b = -10:10)
+res <- gridSearch(testFun, levels)
+res$minfun
+res$minlevels
+#seq(from=-50, to = 50,by=0.1)
+
 
 svm_model <- svm(x=c(1:288),y=data_outflow$y[1:288],
                  kernel="radial",gamma=2^GA@solution[1],cost = 2^GA@solution[2])
