@@ -129,7 +129,6 @@ plot(fitted.svm)
 
 #thief
 thief.model<-thief(myts)
-summary(thief.model)
 
 mstl(myts)%>%autoplot()
 
