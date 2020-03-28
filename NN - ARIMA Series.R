@@ -24,7 +24,7 @@ data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
 tail<-tail(data_outflow)
 
-daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL)
+#daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL)
 #daftar.mae<-data.frame(fh=NULL,mae=NULL)
 #daftar.smape<-data.frame(fh=NULL,smape=NULL)
 #daftar.mape<-rbind(daftar.mape,data.frame(fh=21,mape=12))
@@ -48,7 +48,7 @@ for(x in c(1:12))
   nnetar.model<-nnetar(myts,size = 30,lambda=0)
   
   arima.model <- auto.arima(nnetar.model$residuals,trace=FALSE,start.p=1,start.q=1,
-                            ic="aic",lambda = 0,seasonal = TRUE)
+                            ic="aic",lambda = 0,seasonal = FALSE)
   
   forecast.arima<-forecast(arima.model,forecast_horizon)
   forecast.nnetar<-forecast(nnetar.model,h=forecast_horizon)
@@ -84,6 +84,7 @@ for(x in c(1:12))
   
   daftar.mape.mae.smape<-rbind(daftar.mape.mae.smape,
                                data.frame(fh=forecast_horizon,
+                                          model="NN-ARIMA_Series",
                                           smape=TSrepr::smape(myts_2018[1:forecast_horizon],yhat),
                                           mae=TSrepr::mae(myts_2018[1:forecast_horizon],yhat),
                                           mape=TSrepr::mape(myts_2018[1:forecast_horizon],yhat),
@@ -94,9 +95,9 @@ for(x in c(1:12))
   
 }
 
-rmse(myts_2018,yhat[289:300])
-shapiro.test(myts_2018-yhat[289:300])
-mean(na.omit(nnetar.model$residuals))
-qqnorm(na.omit(nnetar.model$residuals))
-qqline(na.omit(nnetar.model$residuals))
-plot(density(na.omit(nnetar.model$residuals)))
+#rmse(myts_2018,yhat[289:300])
+#shapiro.test(myts_2018-yhat[289:300])
+#mean(na.omit(nnetar.model$residuals))
+#qqnorm(na.omit(nnetar.model$residuals))
+#qqline(na.omit(nnetar.model$residuals))
+#plot(density(na.omit(nnetar.model$residuals)))
