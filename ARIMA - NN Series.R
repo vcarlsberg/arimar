@@ -83,9 +83,9 @@ for(x in c(1:12))
 
 }
 
-rmse(myts_2018,yhat[289:300])
-shapiro.test(myts_2018-yhat[289:300])
-mean(na.omit(nnetar.model$residuals))
-qqnorm(na.omit(nnetar.model$residuals))
-qqline(na.omit(nnetar.model$residuals))
-plot(density(na.omit(nnetar.model$residuals)))
+#rmse(myts_2018,yhat[289:300])
+#shapiro.test(myts_2018-yhat[289:300])
+#mean(na.omit(nnetar.model$residuals))
+#qqnorm(na.omit(nnetar.model$residuals))
+#qqline(na.omit(nnetar.model$residuals))
+#plot(density(na.omit(nnetar.model$residuals)))
