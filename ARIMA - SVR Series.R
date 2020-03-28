@@ -49,7 +49,7 @@ for(x in c(1:12))
   
   #arima
   arima.model <- auto.arima(myts,trace=FALSE,start.p=1,start.q=1,
-                            ic="aic",lambda = lambda,seasonal = TRUE)
+                            ic="aic",lambda = lambda,seasonal = FALSE)
   
   forecast.arima<-forecast(arima.model,forecast_horizon)
   
@@ -62,14 +62,18 @@ for(x in c(1:12))
     mae(arima.model$residuals,svm.model.tuning$fitted)
   }
   
-  levels <- list(a = -50:50, b = -10:10)
-  res <- gridSearch(testFun, levels)
+  if(x==1)
+  {
+    levels <- list(a = -50:50, b = -10:10)
+    res <- gridSearch(testFun, levels)
+    
+    svm.model <- svm(x=c(1:length(myts)),y=arima.model$residuals[1:length(myts)],
+                     kernel="radial",
+                     gamma=2^res$minlevels[1],
+                     cost = 2^res$minlevels[2])
+    #fitted.svm<-ts(svm.model$fitted)
+  }
   
-  svm.model <- svm(x=c(1:length(myts)),y=arima.model$residuals[1:length(myts)],
-                   kernel="radial",
-                   gamma=2^res$minlevels[1],
-                   cost = 2^res$minlevels[2])
-  fitted.svm<-ts(svm.model$fitted)
   nd <- (length(myts)+1):(length(myts)+forecast_horizon)
   forecast.svm<-predict(svm.model,newdata = data.frame(x=nd))
   
@@ -101,3 +105,10 @@ for(x in c(1:12))
   
   
 }
+
+rmse(myts_2018,yhat[289:300])
+shapiro.test(myts_2018-yhat[289:300])
+mean(na.omit(svm.model$residuals))
+qqnorm(na.omit(svm.model$residuals))
+qqline(na.omit(svm.model$residuals))
+plot(density(na.omit(svm.model$residuals)))

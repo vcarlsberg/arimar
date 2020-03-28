@@ -52,7 +52,7 @@ for(x in c(1:12))
   
   #lambda <- BoxCox.lambda(myts,lower=0)
   arima.model <- auto.arima(myts,trace=FALSE,start.p=1,start.q=1,
-                            ic="aic",lambda = lambda,seasonal = TRUE)
+                            ic="aic",lambda = lambda,seasonal = FALSE)
   
   #forecast.arima<-forecast(arima.model,12)
   #forecast::accuracy(arima.model)
@@ -72,6 +72,7 @@ for(x in c(1:12))
   
   daftar.mape.mae.smape<-rbind(daftar.mape.mae.smape,
                                data.frame(fh=forecast_horizon,
+                                          model="ARIMA-NN_Series",
                                           smape=TSrepr::smape(myts_2018[1:forecast_horizon],yhat),
                                           mae=TSrepr::mae(myts_2018[1:forecast_horizon],yhat),
                                           mape=TSrepr::mape(myts_2018[1:forecast_horizon],yhat),
@@ -87,3 +88,4 @@ shapiro.test(myts_2018-yhat[289:300])
 mean(na.omit(nnetar.model$residuals))
 qqnorm(na.omit(nnetar.model$residuals))
 qqline(na.omit(nnetar.model$residuals))
+plot(density(na.omit(nnetar.model$residuals)))
