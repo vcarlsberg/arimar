@@ -1,3 +1,11 @@
+library(gsheet)
+library(dplyr)
+
+url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWGxXSKiOzpo/edit?usp=sharing"
+#gsheet2tbl(url)
+a <- gsheet2text(url, format='csv')
+b <- read.csv(text=a, stringsAsFactors=FALSE)
+
 #ARIMA - SVR Series
 
 library(forecast)
