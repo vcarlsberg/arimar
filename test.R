@@ -7,12 +7,13 @@ library(GA)
 library(Metrics)
 library(tidyverse)
 library(tseries)
+library(aTSA)
 
 
 Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
                          bulan=Dataset_Surabaya[["Bulan"]],
-                         y=Dataset_Surabaya[["L25"]])
+                         y=Dataset_Surabaya[["K1000"]])
 data_outflow$bulan<-match(data_outflow$bulan,month.abb)
 data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
@@ -31,9 +32,11 @@ auto.arima(myts,trace = TRUE)
 
 Box.test(na.omit(myts),type="Ljung-Box",lag=100)
 
-adf.test(myts,alternative="stationary")
+tseries::adf.test(na.omit(myts))
 
 
-kpss.test(na.omit(myts), null="Trend")
+kpss.test(na.omit(myts))
+forecast::ndiffs(myts)
 
+stationary.test(myts)
 
