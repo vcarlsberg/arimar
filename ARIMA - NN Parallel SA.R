@@ -24,14 +24,22 @@ data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
 tail<-tail(data_outflow)
 
-daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL)
+daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL,maape=NULL)
 #daftar.mae<-data.frame(fh=NULL,mae=NULL)
 #daftar.smape<-data.frame(fh=NULL,smape=NULL)
 #daftar.mape<-rbind(daftar.mape,data.frame(fh=21,mape=12))
 
-myts <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2017, 12), frequency=12)
+data_outflow.ts<-ts(data_outflow[["y"]])
+
+dataset_outflow <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
-myts_2018<-ts(data_outflow[["y"]],start=c(2018, 1), end=c(2018, 12), frequency=12)
+myts<-window(dataset_outflow,start=c(2015,1),end=c(2018,12))
+myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2018,12))
+#myts[288]
+#xmyts<-myts(start)
+#myts<-ts(myts[(288-24):288],start=c(2014,1),end=c(2017,12),frequency = 12)
+#myts<-window(myts,start=c(2015,1),end=c(2018,12))
+tseries::adf.test(na.omit(myts))
 
 components.ts = decompose(myts)
 plot(components.ts)
@@ -61,7 +69,8 @@ for(x in c(1:12))
                                           smape=smape(myts_2018[1:forecast_horizon],yhat),
                                           mae=mae(myts_2018[1:forecast_horizon],yhat),
                                           mape=mape(myts_2018[1:forecast_horizon],yhat),
-                                          rmse=rmse(myts_2018[1:forecast_horizon],yhat)
+                                          rmse=rmse(myts_2018[1:forecast_horizon],yhat),
+                                          maape=maape(myts_2018[1:forecast_horizon],yhat)
                                )
   )
 }

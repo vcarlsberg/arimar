@@ -24,12 +24,13 @@ data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
 tail<-tail(data_outflow)
 
-#daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL)
+daftar.mape.mae.smape<-data.frame()
 #daftar.mae<-data.frame(fh=NULL,mae=NULL)
 #daftar.smape<-data.frame(fh=NULL,smape=NULL)
 #daftar.mape<-rbind(daftar.mape,data.frame(fh=21,mape=12))
 
 myts <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2017, 12), frequency=12)
+myts<-ts(myts,start=c(2016,1), end=c(2017,12),frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
 myts_2018<-ts(data_outflow[["y"]],start=c(2018, 1), end=c(2018, 12), frequency=12)
 
@@ -88,12 +89,19 @@ for(x in c(1:12))
                                           smape=TSrepr::smape(myts_2018[1:forecast_horizon],yhat),
                                           mae=TSrepr::mae(myts_2018[1:forecast_horizon],yhat),
                                           mape=TSrepr::mape(myts_2018[1:forecast_horizon],yhat),
-                                          rmse=TSrepr::rmse(myts_2018[1:forecast_horizon],yhat)
+                                          rmse=TSrepr::rmse(myts_2018[1:forecast_horizon],yhat),
+                                          theilu=DescTools::TheilU( (myts_2018[1:forecast_horizon]) ,yhat,type=2),
+                                          maape=TSrepr::maape((myts_2018[1:forecast_horizon]) ,yhat)
+                                          )
                                )
-  )
   
   
 }
+
+
+#DescTools::TheilU(myts_2018[1:1],yhat[1:1],type = 1)
+#TSrepr::maape(myts_2018[1:1],yhat[1:1])
+#TSrepr::mase(myts_2018[1:2],yhat[1:2],naive = 5)
 
 #rmse(myts_2018,yhat[289:300])
 #shapiro.test(myts_2018-yhat[289:300])

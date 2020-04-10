@@ -12,6 +12,8 @@ library(TSrepr)
 library(svrpath)
 library(e1071)
 library(NMOF)
+library(fabletools)
+
 
 Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
@@ -31,6 +33,8 @@ myts <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2017, 12), f
 #myts <- ts(data_outflow_10000, frequency=12)
 myts_2018<-ts(data_outflow[["y"]],start=c(2018, 1), end=c(2018, 12), frequency=12)
 
+myts<-ts(myts[(288-36:288)],start=c(2015,1),end=c(2017,12),frequency = 12)
+
 components.ts = decompose(myts)
 plot(components.ts)
 
@@ -38,7 +42,7 @@ lambda <- BoxCox.lambda(myts,lower = 0)
 
 testFun <- function(x)
 {
-  svm_model.tuning <- svm(x=c(1:length(myts)),y=data_outflow$y[1:length(myts)],
+  svm_model.tuning <- svm(x=c(1:length(myts)),y=myts,
                           kernel="radial",gamma=2^x[1],cost = 2^x[2])
   
   mape(myts,svm_model.tuning$fitted)
@@ -56,17 +60,40 @@ for(x in c(1:12))
   fitted.arima<-arima.model[["fitted"]]
   forecast.arima<-forecast(arima.model,h=forecast_horizon)
   
-  #svr grid search
-  levels <- list(a = -50:50, b = -10:10)
-  res <- gridSearch(testFun, levels)
+  #svr
+  testFun <- function(x)
+  {
+    svm.model.tuning <- svm(x=c(1:length(myts)),y=myts,
+                            kernel="radial",gamma=2^x[1],cost = 2^x[2])
+    
+    mae(myts,svm.model.tuning$fitted)
+  }
   
-  svm_model <- svm(x=c(1:length(myts)),y=data_outflow$y[1:length(myts)],
-                   kernel="radial",
-                   gamma=2^res$minlevels[1],
-                   cost = 2^res$minlevels[2])
-  fitted.svm<-ts(svm_model$fitted)
+  if(x==1)
+  {
+    levels <- list(a = -50:50, b = -10:10)
+    res <- gridSearch(testFun, levels)
+    
+    svm.model <- svm(x=c(1:length(myts)),y=myts,
+                     kernel="radial",
+                     gamma=2^res$minlevels[1],
+                     cost = 2^res$minlevels[2])
+    fitted.svm<-ts(svm.model$fitted)
+    
+
+    
+    #set.seed(72)
+    #GA <- ga(type = "real-valued", nBits = 1000,
+    #         fitness = function(w) -weight_kecil(w[1],w[2]),
+    #         lower =c(-10000,-100), upper = c(10000,100),
+    #         maxiter=1000,parallel=TRUE,monitor=FALSE)
+  }
+  
   nd <- (length(myts)+1):(length(myts)+forecast_horizon)
-  forecast.svm<-predict(svm_model,newdata = data.frame(x=nd))
+  forecast.svm<-predict(svm.model,newdata = data.frame(x=nd))
+  
+  plot(forecast.svm,col="green", type="o")
+  points(myts_2018, col="red", pch="*")
   
   yhat<-0.5*forecast.svm+0.5*forecast.arima[["mean"]]
   
@@ -75,7 +102,8 @@ for(x in c(1:12))
                                           smape=smape(myts_2018[1:forecast_horizon],yhat),
                                           mae=mae(myts_2018[1:forecast_horizon],yhat),
                                           mape=mape(myts_2018[1:forecast_horizon],yhat),
-                                          rmse=rmse(myts_2018[1:forecast_horizon],yhat)
+                                          rmse=rmse(myts_2018[1:forecast_horizon],yhat),
+                                          maape=maape(myts_2018[1:forecast_horizon],yhat)
                                )
   )
 }
