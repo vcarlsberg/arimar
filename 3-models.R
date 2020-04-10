@@ -19,11 +19,19 @@ library(nnfor)
 library(neuralnet)
 library(RSNNS)
 library(BBmisc)
+library(gsheet)
+library(dplyr)
+
+url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWGxXSKiOzpo/edit?usp=sharing"
+#gsheet2tbl(url)
+a <- gsheet2text(url, format='csv')
+b <- read.csv(text=a, stringsAsFactors=FALSE)
+c<-b %>% filter(Kota == "Surabaya")
 
 
 
 
-Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
+Dataset_Surabaya <- c
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
                          bulan=Dataset_Surabaya[["Bulan"]],
                          y=Dataset_Surabaya[["K50000"]])
@@ -57,7 +65,7 @@ lambda <- BoxCox.lambda(myts)
 #normalize(c(1,3,4,4.5,5))
 
 #arima
-arima.model<-auto.arima(myts,ic="aic",trace = FALSE,seasonal = TRUE)
+arima.model<-auto.arima(myts,ic="aic",trace = FALSE,seasonal = TRUE,lambda = lambda)
 forecast::accuracy(arima.model)
 forecast::checkresiduals(arima.model)
 forecast::forecast(arima.model)
@@ -65,16 +73,19 @@ plot(myts,col="red",type="o")
 lines(arima.model$fitted,col="blue",pch="*")
 summary(myts-arima.model$fitted)
 
+
 #nnetar
-nnetar.model<-nnetar(myts,size = 60,scale.inputs = TRUE,lambda = lambda)
+nnetar.model<-nnetar(myts,size = 60,lambda = 0)
 forecast::accuracy(nnetar.model)
 forecast::checkresiduals(nnetar.model)
 forecast::forecast(nnetar.model)
 
 #mlp
 set.seed(72)
-model.mlp<-nnfor::mlp(myts,hd=c(150,300),comb = "mean",sel.lag = TRUE,
-                      hd.auto.type = "valid",difforder = 0, outplot = TRUE)
+model.mlp<-nnfor::mlp(myts,m=12,hd=c(40,100,20),
+                      comb = "median",sel.lag = TRUE,
+                     difforder = 0, outplot = TRUE)
+plot(myts,col="red",type="o")
 lines(model.mlp$fitted,col="green",pch="*")
 sqrt(model.mlp$MSE)
 rmse(window(myts,start=c(2015,1)),model.mlp$fitted)
