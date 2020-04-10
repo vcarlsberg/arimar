@@ -21,6 +21,7 @@ library(RSNNS)
 library(BBmisc)
 library(gsheet)
 library(dplyr)
+library(NMOF)
 
 url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWGxXSKiOzpo/edit?usp=sharing"
 #gsheet2tbl(url)
@@ -49,7 +50,7 @@ data_outflow.ts<-ts(data_outflow[["y"]])
 
 dataset_outflow <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
-myts<-window(dataset_outflow,start=c(2014,1),end=c(2017,12))
+myts<-window(dataset_outflow,start=c(2013,1),end=c(2017,12))
 myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2018,12))
 #myts[288]
 #xmyts<-myts(start)
@@ -65,7 +66,7 @@ lambda <- BoxCox.lambda(myts)
 #normalize(c(1,3,4,4.5,5))
 
 #arima
-arima.model<-auto.arima(myts,ic="aic",trace = FALSE,seasonal = TRUE,lambda = lambda)
+arima.model<-auto.arima(myts,ic="aic",trace = FALSE,lambda = lambda )
 forecast::accuracy(arima.model)
 forecast::checkresiduals(arima.model)
 forecast::forecast(arima.model)
@@ -82,7 +83,19 @@ forecast::forecast(nnetar.model)
 
 #mlp
 set.seed(72)
-fungsi_nnformlp<-function()
+fungsi_nnformlp<-function(n)
+{
+  model.mlp<-nnfor::mlp(myts,m=12,hd=c(n1,n2,n3),
+                        comb = "median",sel.lag = TRUE,
+                        difforder = 0)
+  sqrt(model.mlp$MSE)
+}
+
+sol <- gridSearch(fun = fungsi_nnformlp, 
+                  levels = list(1:100,1:100,1:100))
+sol$minfun
+sol$minlevels
+
 model.mlp<-nnfor::mlp(myts,m=12,hd=c(40,100,10),
                       comb = "median",sel.lag = TRUE,
                      difforder = 0, outplot = TRUE)
