@@ -75,6 +75,7 @@ levels <- list(a = -50:50, b = -10:10)
 res <- gridSearch(testFun, levels)
 res$minfun
 res$minlevels
+res$minlevels[1]
 #seq(from=-50, to = 50,by=0.1)
 
 
