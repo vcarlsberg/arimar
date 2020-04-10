@@ -57,20 +57,28 @@ lambda <- BoxCox.lambda(myts)
 #normalize(c(1,3,4,4.5,5))
 
 #arima
-arima.model<-auto.arima(myts,ic="aic",trace = FALSE,lambda = lambda,seasonal = TRUE)
+arima.model<-auto.arima(myts,ic="aic",trace = FALSE,seasonal = TRUE)
 forecast::accuracy(arima.model)
+forecast::checkresiduals(arima.model)
+forecast::forecast(arima.model)
 plot(myts,col="red",type="o")
 lines(arima.model$fitted,col="blue",pch="*")
 summary(myts-arima.model$fitted)
 
-
+#nnetar
+nnetar.model<-nnetar(myts,size = 60,scale.inputs = TRUE,lambda = lambda)
+forecast::accuracy(nnetar.model)
+forecast::checkresiduals(nnetar.model)
+forecast::forecast(nnetar.model)
 
 #mlp
 set.seed(72)
-model.mlp<-nnfor::mlp(myts,hd=c(150,300),m=12,comb = "mean",sel.lag = FALSE)
+model.mlp<-nnfor::mlp(myts,hd=c(150,300),comb = "mean",sel.lag = TRUE,
+                      hd.auto.type = "valid",difforder = 0, outplot = TRUE)
 lines(model.mlp$fitted,col="green",pch="*")
 sqrt(model.mlp$MSE)
 rmse(window(myts,start=c(2015,1)),model.mlp$fitted)
+forecast::forecast(model.mlp,h=12)
 
 #mlp_type_2 --> x nya pake 1:xx (bukan autoregression)
 index_x<-1:length(myts)
