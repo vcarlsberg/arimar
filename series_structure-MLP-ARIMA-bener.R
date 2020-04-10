@@ -33,7 +33,7 @@ plot(fitted.and.forecast.arima)
 #nnetar
 set.seed(72)
 residual<-arima.model[["x"]]-arima.model[["fitted"]]
-lambda <- BoxCox.lambda(residual,lower=0)
+lambda <- BoxCox.lambda(arima.model$residuals,lower=0)
 nnetar.model<-nnetar(residual,lambda=0,scale.inputs = TRUE,size=30)
 forecast::accuracy(nnetar.model)
 forecast.nnetar<-forecast(nnetar.model,h=12)
