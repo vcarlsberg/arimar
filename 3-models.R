@@ -85,14 +85,16 @@ forecast::forecast(nnetar.model)
 set.seed(72)
 fungsi_nnformlp<-function(n)
 {
-  model.mlp<-nnfor::mlp(myts,m=12,hd=c(n1,n2,n3),
+  model.mlp<-nnfor::mlp(myts,m=12,hd=c(n[1],n[2],n[3]),
                         comb = "median",sel.lag = TRUE,
                         difforder = 0)
   sqrt(model.mlp$MSE)
 }
 
 sol <- gridSearch(fun = fungsi_nnformlp, 
-                  levels = list(1:100,1:100,1:100))
+                  levels = list(c(20,40,60,80,100),
+                                c(20,40,60,80,100),
+                                c(20,40,60,80,100)))
 sol$minfun
 sol$minlevels
 
