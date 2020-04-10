@@ -82,7 +82,8 @@ forecast::forecast(nnetar.model)
 
 #mlp
 set.seed(72)
-model.mlp<-nnfor::mlp(myts,m=12,hd=c(40,100,20),
+fungsi_nnformlp<-function()
+model.mlp<-nnfor::mlp(myts,m=12,hd=c(40,100,10),
                       comb = "median",sel.lag = TRUE,
                      difforder = 0, outplot = TRUE)
 plot(myts,col="red",type="o")
