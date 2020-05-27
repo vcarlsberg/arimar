@@ -27,7 +27,7 @@ url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWG
 #gsheet2tbl(url)
 a <- gsheet2text(url, format='csv')
 b <- read.csv(text=a, stringsAsFactors=FALSE)
-c<-b %>% filter(Kota == "Surabaya")
+c<-b %>% filter(Kota == "Jakarta")
 
 
 
@@ -35,7 +35,7 @@ c<-b %>% filter(Kota == "Surabaya")
 Dataset_Surabaya <- c
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
                          bulan=Dataset_Surabaya[["Bulan"]],
-                         y=Dataset_Surabaya[["K50000"]])
+                         y=Dataset_Surabaya[["K20000"]])
 data_outflow$bulan<-match(data_outflow$bulan,month.abb)
 data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
@@ -50,33 +50,41 @@ data_outflow.ts<-ts(data_outflow[["y"]])
 
 dataset_outflow <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
-myts<-window(dataset_outflow,start=c(2013,1),end=c(2017,12))
+myts<-window(dataset_outflow,end=c(2017,12))
 myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2018,12))
 #myts[288]
 #xmyts<-myts(start)
 #myts<-ts(myts[(288-24):288],start=c(2014,1),end=c(2017,12),frequency = 12)
 #myts<-window(myts,start=c(2015,1),end=c(2018,12))
 print(tseries::adf.test(na.omit(myts)))
+print(tseries::kpss.test(na.omit(myts)))
 
-components.ts = decompose(myts)
+number.diff<-forecast::ndiffs(myts)
+myts.diff<-diff(myts,differences = number.diff)
+
+tseries::terasvirta.test(na.omit(myts))
+
+components.ts = decompose(myts.diff)
 plot(components.ts)
 
 lambda <- BoxCox.lambda(myts)
 
 #normalize(c(1,3,4,4.5,5))
+pp.test(myts)
 
 #arima
-arima.model<-auto.arima(myts,ic="aic",trace = FALSE,lambda = lambda )
+arima.model<-auto.arima(myts,ic="aic",test="adf",trace = FALSE,lambda = lambda)
 forecast::accuracy(arima.model)
 forecast::checkresiduals(arima.model)
 forecast::forecast(arima.model)
-plot(myts,col="red",type="o")
+plot(myts.diff,col="red",type="o")
 lines(arima.model$fitted,col="blue",pch="*")
 summary(myts-arima.model$fitted)
 
 
+
 #nnetar
-nnetar.model<-nnetar(myts,size = 60,lambda = 0)
+nnetar.model<-nnetar(myts,size = 30,lambda = lambda)
 forecast::accuracy(nnetar.model)
 forecast::checkresiduals(nnetar.model)
 forecast::forecast(nnetar.model)
@@ -98,14 +106,15 @@ sol <- gridSearch(fun = fungsi_nnformlp,
 sol$minfun
 sol$minlevels
 
-model.mlp<-nnfor::mlp(myts,m=12,hd=c(40,100,10),
+model.mlp<-nnfor::mlp(myts,m=12,hd=c(3,8,5),
                       comb = "median",sel.lag = TRUE,
                      difforder = 0, outplot = TRUE)
-plot(myts,col="red",type="o")
+plot(myts.diff,col="red",type="o")
 lines(model.mlp$fitted,col="green",pch="*")
 sqrt(model.mlp$MSE)
 rmse(window(myts,start=c(2015,1)),model.mlp$fitted)
 forecast::forecast(model.mlp,h=12)
+
 
 #mlp_type_2 --> x nya pake 1:xx (bukan autoregression)
 index_x<-1:length(myts)
