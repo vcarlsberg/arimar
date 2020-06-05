@@ -1,5 +1,7 @@
 #SARIMA - NN Parallel Simple Averaging
 
+rm(list=ls())
+
 library(forecast)
 library(fable)
 library(forecastHybrid)
@@ -14,70 +16,77 @@ library(forecTheta)
 library(thief)
 library(svrpath)
 library(e1071)
+library(nnfor)
+library(neuralnet)
+library(RSNNS)
+library(BBmisc)
+library(gsheet)
+library(dplyr)
+library(NMOF)
+library(TSstudio)
+library(fpp2)
+library(bestNormalize)
 
-Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
+url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWGxXSKiOzpo/edit?usp=sharing"
+#gsheet2tbl(url)
+a <- gsheet2text(url, format='csv')
+b <- read.csv(text=a, stringsAsFactors=FALSE)
+c<-b %>% filter(Kota == "Jakarta")
+
+
+Dataset_Surabaya <- c
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
                          bulan=Dataset_Surabaya[["Bulan"]],
-                         y=Dataset_Surabaya[["K20000"]])
+                         data1=Dataset_Surabaya[["K50000"]]
+)
 data_outflow$bulan<-match(data_outflow$bulan,month.abb)
 data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
 tail<-tail(data_outflow)
 
-daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL,maape=NULL)
-#daftar.mae<-data.frame(fh=NULL,mae=NULL)
-#daftar.smape<-data.frame(fh=NULL,smape=NULL)
-#daftar.mape<-rbind(daftar.mape,data.frame(fh=21,mape=12))
+data_outflow.ts<-ts(data_outflow[,3],frequency = 12)
 
-##data_outflow.ts<-ts(data_outflow[["y"]])
-
-dataset_outflow <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
+dataset_outflow <- ts(data_outflow[,3],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
-myts<-window(dataset_outflow,start=c(2014,1),end=c(2017,12),frequency=12)
-myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2019,6),frequency=12)
-#myts[288]
-#xmyts<-myts(start)
-#myts<-ts(myts[(288-24):288],start=c(2014,1),end=c(2017,12),frequency = 12)
-#myts<-window(myts,start=c(2015,1),end=c(2018,12))
+myts<-window(dataset_outflow,end=c(2017,12))
+myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2019,6))
 
-components.ts = decompose(myts)
-plot(components.ts)
+set.seed(72)
+adf.test(myts)
 
-print(tseries::adf.test(na.omit(myts)))
+lambda.value <- 1
 
-
-lambda <- BoxCox.lambda(myts,lower = 0)
+myts_transformed<-BoxCox(myts,lambda.value)
+shapiro.test(myts_transformed)
 
 for(x in c(1:18))
 {
-  print(x)
-
   forecast_horizon<-x
   
-  arima.model <- auto.arima(myts,trace=FALSE,seasonal = TRUE,
-                            start.p=1,start.q=1,lambda = lambda)
-  #fitted.arima<-arima.model[["fitted"]]
+  arima.model <- auto.arima(myts_transformed,trace=FALSE,seasonal = TRUE,
+                            start.p=1,start.q=1)
   forecast.arima<-forecast(arima.model,h=forecast_horizon)
   
-  nnetar.model<-nnetar(myts,size = 30,lambda=lambda,scale.inputs = TRUE)
-  #forecast::accuracy(nnetar.model)
-  #fitted.nnetar<-nnetar.model[["fitted"]]
+  nnetar.model<-nnetar(myts_transformed,size = 30)
   forecast.nnetar<-forecast(nnetar.model,h=forecast_horizon)
   
-  yhat<-0.5*forecast.nnetar[["mean"]]+0.5*forecast.arima[["mean"]]
+  yhat_forecast<-0.5*forecast.nnetar[["mean"]]+0.5*forecast.arima[["mean"]]
+  yhat_fitted<-0.5*arima.model$fitted+0.5*nnetar.model$fitted
   
-  daftar.mape.mae.smape<-rbind(daftar.mape.mae.smape,
-                               data.frame(fh=forecast_horizon,
-                                          smape=smape(myts_2018[1:forecast_horizon],yhat),
-                                          mae=mae(myts_2018[1:forecast_horizon],yhat),
-                                          mape=mape(myts_2018[1:forecast_horizon],yhat),
-                                          rmse=rmse(myts_2018[1:forecast_horizon],yhat),
-                                          maape=maape(myts_2018[1:forecast_horizon],yhat)
-                                          )
-                               )
-  print(daftar.mape.mae.smape)
+  yhat_fitted_backtransform<-InvBoxCox(yhat_fitted,lambda = lambda.value)
+  yhat_forecast_backtransform<-InvBoxCox(yhat_forecast,lambda = lambda.value)
+  
+  #residual
+  residual_value<-na.omit(myts_transformed-yhat_fitted_backtransform)
+  #checkresiduals(residual_value)
+  box_test_result<-Box.test(residual_value,type="Ljung-Box")
+  
+  in_sample_mape<-mape(subset(myts,start = (nnetar.model$p+1)),subset(yhat_fitted_backtransform,start =  (nnetar.model$p+1)))
+  out_sample_mape<-mape(subset(myts_2018,start = 1,end = forecast_horizon),
+                        subset(yhat_forecast_backtransform,start = 1,end = forecast_horizon))
+  
+  print(paste("fh =",forecast_horizon,", in sample mape =",in_sample_mape,
+        ", out sample mape =",out_sample_mape,"box test result =",box_test_result$p.value))
+  
 }
-#daftar.mape[1,3]<-21
-#mape(myts_2018,yhat)
-#mae(myts_2018,yhat)
-#smape(myts_2018,yhat)
+
