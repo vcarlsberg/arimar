@@ -107,7 +107,6 @@ for(bill in c("K50000"))
   myts_transformed<-myts
   shapiro.test(myts_transformed)
   
-  
   for(x in c(1:18))
   {
     forecast_horizon<-x
@@ -122,8 +121,12 @@ for(bill in c("K50000"))
                              xreg = subset(dataset_EIDULFITR,
                                            start=289,end=(289+forecast_horizon-1)))
     
-    nnetar.model<-nnetar(myts_transformed,size = 30)
-    forecast.nnetar<-forecast(nnetar.model,h=forecast_horizon)
+    nnetar.model<-nnetar(myts_transformed,size = 30,xreg = window(dataset_EIDULFITR,
+                                                                  start=start(myts_transformed),
+                                                                  end=end(myts_transformed))) 
+    forecast.nnetar<-forecast(nnetar.model,h=forecast_horizon,
+                              xreg = subset(dataset_EIDULFITR,
+                                            start=289,end=(289+forecast_horizon-1)))
     
     yhat_forecast<-0.5*forecast.nnetar[["mean"]]+0.5*forecast.arima[["mean"]]
     yhat_fitted<-0.5*arima.model$fitted+0.5*nnetar.model$fitted
