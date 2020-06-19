@@ -31,7 +31,7 @@ url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWG
 #gsheet2tbl(url)
 a <- gsheet2text(url, format='csv')
 b <- read.csv(text=a, stringsAsFactors=FALSE)
-c<-b %>% filter(Kota == "Jakarta")
+c<-b %>% filter(Kota == "Malang")
 
 
 for(bill in c("K100000","K50000","K20000","K10000","K5000","K2000"))
@@ -77,16 +77,17 @@ lambda.value <- 1
 myts_transformed<-BoxCox(myts,lambda.value)
 shapiro.test(myts_transformed)
 
+arima.model <- auto.arima(myts_transformed,trace=FALSE,seasonal = TRUE,
+                          start.p=1,start.q=1)
+
+nnetar.model<-nnetar(myts_transformed,size = 30)
 
 for(x in c(1:18))
 {
   forecast_horizon<-x
   
-  arima.model <- auto.arima(myts_transformed,trace=FALSE,seasonal = TRUE,
-                            start.p=1,start.q=1)
   forecast.arima<-forecast(arima.model,h=forecast_horizon)
   
-  nnetar.model<-nnetar(myts_transformed,size = 30)
   forecast.nnetar<-forecast(nnetar.model,h=forecast_horizon)
   
   yhat_forecast<-0.5*forecast.nnetar[["mean"]]+0.5*forecast.arima[["mean"]]
@@ -111,3 +112,5 @@ for(x in c(1:18))
 }
   
 }
+
+
