@@ -31,7 +31,7 @@ url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWG
 #gsheet2tbl(url)
 a <- gsheet2text(url, format='csv')
 b <- read.csv(text=a, stringsAsFactors=FALSE)
-c<-b %>% filter(Kota == "Jakarta")
+c<-b %>% filter(Kota == "Bandung")
 
 EIDULFITR<-c(
   0,0,1,0,0,0,0,0,0,0,0,0, #1994
@@ -64,7 +64,7 @@ EIDULFITR<-c(
 
 dataset_EIDULFITR<-ts(EIDULFITR,start = c(1994,1), end=c(2019,6),frequency = 12)
 
-for(bill in c("K100000","K50000","K20000","K10000","K5000","K2000"))
+for(bill in c("K100000","K50000"))
 {
   
   
@@ -102,7 +102,7 @@ for(bill in c("K100000","K50000","K20000","K10000","K5000","K2000"))
   adf_result<-adf.test(myts)
   
   
-  lambda.value <- 1
+  lambda.value <- BoxCox.lambda(myts)
   
   myts_transformed<-BoxCox(myts,lambda.value)
   shapiro.test(myts_transformed)
