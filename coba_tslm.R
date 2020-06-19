@@ -22,6 +22,7 @@ library(gsheet)
 library(dplyr)
 library(NMOF)
 library(TSstudio)
+library(fpp2)
 
 url<-"https://docs.google.com/spreadsheets/d/1pYpYd04zw6iUz32mGkGNz_1_-jorwM-QWGxXSKiOzpo/edit?usp=sharing"
 #gsheet2tbl(url)
@@ -35,7 +36,9 @@ c<-b %>% filter(Kota == "Jakarta")
 Dataset_Surabaya <- c
 data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
                          bulan=Dataset_Surabaya[["Bulan"]],
-                         data=Dataset_Surabaya[["K20000"]])
+                         data1=Dataset_Surabaya[["K20000"]],
+                         data2=Dataset_Surabaya[["K10000"]]
+                         )
 data_outflow$bulan<-match(data_outflow$bulan,month.abb)
 data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
@@ -46,9 +49,9 @@ tail<-tail(data_outflow)
 #daftar.smape<-data.frame(fh=NULL,smape=NULL)
 #daftar.mape<-rbind(daftar.mape,data.frame(fh=21,mape=12))
 
-data_outflow.ts<-ts(data_outflow[["data"]],frequency = 12)
+data_outflow.ts<-ts(data_outflow[,3:4],frequency = 12)
 
-dataset_outflow <- ts(data_outflow[["data"]],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
+dataset_outflow <- ts(data_outflow[,3:4],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
 myts<-window(dataset_outflow,end=c(2017,12))
 myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2018,12))
@@ -67,7 +70,7 @@ data_outflow_exo<-cbind(data_outflow,NATAL,Y2K,KRISMON)
 lm.model<-lm(data~NATAL+tahun+Y2K+KRISMON,data=data_outflow_exo)
 summary(lm.model)
 
-tslm.model<-tslm(myts~season)
+tslm.model<-tslm(data1~data2+season,data = myts)
 summary(tslm.model)
 
 #y <- ts(rnorm(120,0,3) + 1:120 + 20*sin(2*pi*(1:120)/12), frequency=12)
@@ -75,3 +78,12 @@ summary(tslm.model)
 #summary(fit)
 #plot(y)
 ts_plot(data_outflow.ts,line.mode = "lines+markers")
+
+fit.consMR <- tslm(
+  Consumption ~ Income + Production + Unemployment + Savings,
+  data=uschange)
+summary(fit.consMR)
+
+
+
+uschange
