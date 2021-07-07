@@ -23,36 +23,32 @@ library(svrpath)
 library(e1071)
 library(NMOF)
 
-Dataset_Surabaya <- read_excel("C:/Users/asus/OneDrive - Institut Teknologi Sepuluh Nopember/Kuliah/Thesis/Dataset_Surabaya.xlsx")
-data_outflow<-data.frame(tahun=Dataset_Surabaya[["Tahun"]],
-                         bulan=Dataset_Surabaya[["Bulan"]],
-                         y=Dataset_Surabaya[["K100000"]])
-data_outflow$bulan<-match(data_outflow$bulan,month.abb)
+Dataset <- b
+data_outflow<-data.frame(kota=Dataset[["Kota"]],
+                         tahun=Dataset[["Tahun"]],
+                         bulan=Dataset[["Bulan"]],
+                         y=Dataset[["K10000"]])
+data_outflow<-data_outflow[data_outflow$kota == "Jakarta", ]
+#data_outflow$bulan<-match(data_outflow$bulan,month.abb)
 data_outflow<-na.omit(data_outflow)
 head<-head(data_outflow)
 tail<-tail(data_outflow)
 
-daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL,maape=NULL)
+daftar.mape.mae.smape<-data.frame(fh=NULL,mape=NULL,mae=NULL,smape=NULL)
 #daftar.mae<-data.frame(fh=NULL,mae=NULL)
 #daftar.smape<-data.frame(fh=NULL,smape=NULL)
 #daftar.mape<-rbind(daftar.mape,data.frame(fh=21,mape=12))
 
-data_outflow.ts<-ts(data_outflow[["y"]])
-
-dataset_outflow <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2019, 12), frequency=12)
+myts <- ts(data_outflow[["y"]],start=c(head[1,1], head[1,2]), end=c(2017, 12), frequency=12)
 #myts <- ts(data_outflow_10000, frequency=12)
-myts<-window(dataset_outflow,start=c(2014,1),end=c(2017,12))
-myts_2018<-window(dataset_outflow,start=c(2018,1),end=c(2018,12))
-#myts[288]
-#xmyts<-myts(start)
-#myts<-ts(myts[(288-24):288],start=c(2014,1),end=c(2017,12),frequency = 12)
-#myts<-window(myts,start=c(2015,1),end=c(2018,12))
-tseries::adf.test(na.omit(myts))
+myts_2018<-ts(data_outflow[["y"]],start=c(2018, 1), end=c(2018, 12), frequency=12)
 
 components.ts = decompose(myts)
 plot(components.ts)
 
 lambda <- BoxCox.lambda(myts,lower = 0)
+
+
 
 for(x in c(1:12))
 {
@@ -65,15 +61,14 @@ for(x in c(1:12))
                             ic="aic",lambda = lambda,seasonal = FALSE)
   
   forecast.arima<-forecast(arima.model,forecast_horizon)
-  residual.model1<-myts-arima.model$fitted
   
   #svr
   testFun <- function(x)
   {
-    svm.model.tuning <- svm(x=c(1:length(myts)),y=residual.model1[1:length(myts)],
+    svm.model.tuning <- svm(x=c(1:length(myts)),y=arima.model$residuals[1:length(myts)],
                             kernel="radial",gamma=2^x[1],cost = 2^x[2])
     
-    mae(residual.model1,svm.model.tuning$fitted)
+    mae(arima.model$residuals,svm.model.tuning$fitted)
   }
   
   if(x==1)
@@ -81,25 +76,16 @@ for(x in c(1:12))
     levels <- list(a = -50:50, b = -10:10)
     res <- gridSearch(testFun, levels)
     
-    svm.model <- svm(x=c(1:length(myts)),y=residual.model1[1:length(myts)],
+    svm.model <- svm(x=c(1:length(myts)),y=arima.model$residuals[1:length(myts)],
                      kernel="radial",
                      gamma=2^res$minlevels[1],
                      cost = 2^res$minlevels[2])
-    fitted.svm<-ts(svm.model$fitted)
-    
-    #plot(svm.model$fitted,col="green")
-    #set.seed(72)
-    #GA <- ga(type = "real-valued", nBits = 1000,
-    #         fitness = function(w) -weight_kecil(w[1],w[2]),
-    #         lower =c(-10000,-100), upper = c(10000,100),
-    #         maxiter=1000,parallel=TRUE,monitor=FALSE)
+    #fitted.svm<-ts(svm.model$fitted)
   }
   
   nd <- (length(myts)+1):(length(myts)+forecast_horizon)
-  forecast.svm<-predict(svm.model,newdata = data.frame(x=nd),probability = TRUE)
+  forecast.svm<-predict(svm.model,newdata = data.frame(x=nd))
   
-  #print(svm.model)
-  #summary(svm.model)
   #forecast.arima<-forecast(arima.model,12)
   #forecast::accuracy(arima.model)
   #fitted.and.forecast.arima<-ts(c(forecast.arima[["fitted"]],forecast.arima[["mean"]]))
@@ -122,19 +108,16 @@ for(x in c(1:12))
                                           smape=TSrepr::smape(myts_2018[1:forecast_horizon],yhat),
                                           mae=TSrepr::mae(myts_2018[1:forecast_horizon],yhat),
                                           mape=TSrepr::mape(myts_2018[1:forecast_horizon],yhat),
-                                          rmse=TSrepr::rmse(myts_2018[1:forecast_horizon],yhat),
-                                          maape=TSrepr::maape(myts_2018[1:forecast_horizon],yhat)
-                                          
+                                          rmse=TSrepr::rmse(myts_2018[1:forecast_horizon],yhat)
                                )
   )
-  print(daftar.mape.mae.smape)
+  
   
 }
 
-#TSrepr::maape(myts_2018[1:forecast_horizon],yhat)
-#rmse(myts_2018,yhat[289:300])
-#shapiro.test(myts_2018-yhat[289:300])
-#mean(na.omit(svm.model$residuals))
-#qqnorm(na.omit(svm.model$residuals))
-#qqline(na.omit(svm.model$residuals))
-#plot(density(na.omit(svm.model$residuals)))
+rmse(myts_2018,yhat[289:300])
+shapiro.test(myts_2018-yhat[289:300])
+mean(na.omit(svm.model$residuals))
+qqnorm(na.omit(svm.model$residuals))
+qqline(na.omit(svm.model$residuals))
+plot(density(na.omit(svm.model$residuals)))
